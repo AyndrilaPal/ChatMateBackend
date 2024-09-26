@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat Test</title>
+</head>
+<body>
+    <h1>WebSocket Chat Test</h1>
+    <div>
+        <label for="user_id">Your User ID:</label>
+        <input type="text" id="user_id" placeholder="Enter your user ID">
+        <label for="target_user_id">Target User ID:</label>
+        <input type="text" id="target_user_id" placeholder="Enter target user ID">
+        <label for="message">Message:</label>
+        <input type="text" id="message" placeholder="Enter your message">
+        <button onclick="connect()">Connect</button>
+        <button onclick="sendMessage()">Send Message</button>
+    </div>
+    <div>
+        <h2>Messages:</h2>
+        <ul id="messages"></ul>
+    </div>
+
+    <script>
+        let socket;
+
+        function connect() {
+            const userId = document.getElementById("user_id").value;
+            const targetUserId = document.getElementById("target_user_id").value;
+
+            // Replace this WebSocket URL with your actual WebSocket URL
+            const wsUrl = `ws://localhost:8000/ws/chat/${targetUserId}/`;
+            socket = new WebSocket(wsUrl);
+
+            // WebSocket connection opened
+            socket.onopen = function(event) {
+                console.log("WebSocket connection established for user " + userId);
+            };
+
+            // Handle incoming messages from the server
+            socket.onmessage = function(event) {
+                const messagesList = document.getElementById("messages");
+                const newMessage = document.createElement("li");
+                newMessage.textContent = "Received: " + event.data;
+                messagesList.appendChild(newMessage);
+            };
+
+            // Handle WebSocket connection closing
+            socket.onclose = function(event) {
+                console.log("WebSocket connection closed");
+            };
+
+            // Handle WebSocket errors
+            socket.onerror = function(error) {
+                console.error("WebSocket error:", error);
+            };
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById("message").value;
+            const targetUserId = document.getElementById("target_user_id").value;
+
+            // Ensure that the WebSocket is open
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const messagePayload = {
+                    message: messageInput,
+                    receiver_id: targetUserId // Receiver is the target user
+                };
+
+                // Send the message as JSON
+                socket.send(JSON.stringify(messagePayload));
+
+                // Display the sent message in the UI
+                const messagesList = document.getElementById("messages");
+                const newMessage = document.createElement("li");
+                newMessage.textContent = "Sent: " + messageInput;
+                messagesList.appendChild(newMessage);
+
+                // Clear the message input field
+                document.getElementById("message").value = '';
+            } else {
+                console.error("WebSocket connection is not open.");
+            }
+        }
+    </script>
+</body>
+</html>
